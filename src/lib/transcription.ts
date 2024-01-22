@@ -1,9 +1,10 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import OpenAI from 'openai';
-import ffmpeg from 'fluent-ffmpeg';
 import * as wav from 'node-wav';
 import { Readable } from 'stream';
+import { SoxCommand } from 'sox-audio';
+import { exec } from 'child_process';
 
 const openai = new OpenAI({
     apiKey: process.env['OPENAI_API_KEY'],
@@ -11,27 +12,34 @@ const openai = new OpenAI({
 
 const SUPPORTED_EXTENSIONS = [".mp4", ".m4a", ".mp3", ".wav"];
 const AUDIO_CHUNK_SIZE = 60 * 1000; // 1 minute in milliseconds
-
 const logger = console; // Replace with a proper logging library if needed
 
-function extractAudio(inputFile: string, outputFile: string): void {
-    logger.info('extractAudio function called');
-    
-    ffmpeg()
-        .input(inputFile)
-        .audioCodec('pcm_s16le')
-        .audioChannels(1)
-        .audioFrequency(16000)
-        .output(outputFile)
-        .on('end', () => {
+
+function extractAudio(inputFile: string, outputFile: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+        const soxCommand = new SoxCommand()
+            .input(inputFile)
+            .output(outputFile)
+            .outputSampleRate(16000)
+            .outputChannels(1)
+            .outputBits(16)
+            .outputFileType('wav');
+
+        soxCommand.run((err, stdout, stderr) => {
+            if (err) {
+                logger.error('Error in audio extraction: ', err);
+                return reject(err);
+            }
             logger.info('Audio extraction finished');
-        })
-        .run();
+            resolve();
+        });
+    });
 }
 
-function processMP4File(inputFile: string): string {
+
+async function processMP4File(inputFile: string): Promise<string> {
     const extractedAudioFile = `${path.basename(inputFile, path.extname(inputFile))}_extracted_audio.wav`;
-    extractAudio(inputFile, extractedAudioFile);
+    await extractAudio(inputFile, extractedAudioFile);
     return extractedAudioFile;
 }
 
@@ -55,7 +63,7 @@ export async function transcribeAndExtract(audioFile: string): Promise<string | 
         if (SUPPORTED_EXTENSIONS.includes(fileExtension)) {
             logger.info(`Submitted file identified as ${fileExtension.toUpperCase()} file`);
             if (fileExtension === ".mp4") {
-                extractedAudioFile = processMP4File(audioFile);
+                extractedAudioFile = await processMP4File(audioFile);
             } else if (fileExtension === ".wav") {
                 extractedAudioFile = processWAVFile(audioFile);
             } else {

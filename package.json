@@ -26,7 +26,7 @@
     "fluent-ffmpeg": "^2.1.2",
     "langchain": "^0.1.4",
     "lucide-react": "^0.311.0",
-    "next": "14.0.4",
+    "next": "^14.1.0",
     "node-wav": "^0.0.2",
     "openai": "^4.24.7",
     "pdf-parse": "^1.1.1",
@@ -36,11 +36,12 @@
     "react-dropzone": "^14.2.3",
     "react-hot-toast": "^2.4.1",
     "react-query": "^3.39.3",
+    "sox-audio": "^0.3.0",
     "tailwind-merge": "^2.2.0",
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
-    "@types/node": "^20",
+    "@types/node": "^20.11.5",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.0.1",
