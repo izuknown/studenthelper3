@@ -4,7 +4,7 @@ import OpenAI from 'openai';
 import * as wav from 'node-wav';
 import { Readable } from 'stream';
 import { SoxCommand } from 'sox-audio';
-import { exec } from 'child_process';
+import PDFDocument from 'pdfkit';
 
 const openai = new OpenAI({
     apiKey: process.env['OPENAI_API_KEY'],
@@ -14,6 +14,10 @@ const SUPPORTED_EXTENSIONS = [".mp4", ".m4a", ".mp3", ".wav"];
 const AUDIO_CHUNK_SIZE = 60 * 1000; // 1 minute in milliseconds
 const logger = console; // Replace with a proper logging library if needed
 
+export interface TranscriptionResult {
+    transcript: string;
+    pdfPath: string;
+}
 
 function extractAudio(inputFile: string, outputFile: string): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -36,6 +40,19 @@ function extractAudio(inputFile: string, outputFile: string): Promise<void> {
     });
 }
 
+function saveTranscriptAsPDF(transcript: string, pdfFilePath: string) {
+    const doc = new PDFDocument();
+    doc.pipe(fs.createWriteStream(pdfFilePath));
+    doc.font('Times-Roman')
+       .fontSize(12)
+       .text(transcript, {
+           align: 'left',
+           indent: 20,
+           height: 300,
+           ellipsis: true
+       });
+    doc.end();
+}
 
 async function processMP4File(inputFile: string): Promise<string> {
     const extractedAudioFile = `${path.basename(inputFile, path.extname(inputFile))}_extracted_audio.wav`;
@@ -52,7 +69,7 @@ function processUnsupportedFile(fileExtension: string): void {
     return;
 }
 
-export async function transcribeAndExtract(audioFile: string): Promise<string | undefined> {
+export async function transcribeAndExtract(audioFile: string): Promise<TranscriptionResult | undefined> {
     let fullTranscript = '';
 
     if (audioFile) {
@@ -67,7 +84,6 @@ export async function transcribeAndExtract(audioFile: string): Promise<string | 
             } else if (fileExtension === ".wav") {
                 extractedAudioFile = processWAVFile(audioFile);
             } else {
-                // Handle other supported file types
                 extractedAudioFile = audioFile;
             }
         } else {
@@ -97,7 +113,7 @@ export async function transcribeAndExtract(audioFile: string): Promise<string | 
             logger.info(`Chunk ${i} being transcribed`);
 
             try {
-                const transcript = await openai.audio.transcriptions.create({
+                const transcriptResponse = await openai.audio.transcriptions.create({
                     model: 'whisper-1',
                     file: {
                         buffer: currentChunkStream,
@@ -108,22 +124,29 @@ export async function transcribeAndExtract(audioFile: string): Promise<string | 
                     },
                 } as any);
 
-                logger.info(`Chunk ${i} transcribed`);
-                logger.info(`\n\nChunk ${i} transcription is...\n${transcript}`);
-                fullTranscript += transcript;
+                console.log(transcriptResponse);
+
+
+                // const transcriptText = transcriptResponse.YOUR_TRANSCRIPT_PROPERTY_HERE; // Adjust this line based on the actual response structure
+                // logger.info(`Chunk ${i} transcribed: ${transcriptText}`);
+                // fullTranscript += transcriptText;
             } catch (error) {
                 logger.error(`Error transcribing chunk ${i}: ${error}`);
             }
         }
 
-        const txtFilePath = `/tmp/pdf-full_transcript-${Date.now()}.txt`;
-        fs.writeFileSync(txtFilePath, fullTranscript, { encoding: "utf-8" });
+        if (fullTranscript) {
+            const txtFilePath = `/tmp/pdf-full_transcript-${Date.now()}.txt`;
+            fs.writeFileSync(txtFilePath, fullTranscript, { encoding: "utf-8" });
 
-        const pdfFilePath = `/tmp/pdf-full_transcript-${Date.now()}.pdf`;
+            const pdfFilePath = `/tmp/pdf-full_transcript-${Date.now()}.pdf`;
+            saveTranscriptAsPDF(fullTranscript, pdfFilePath);
 
-        logger.info(`Full transcript saved as text: ${txtFilePath}`);
-        logger.info(`Full transcript saved as PDF: ${pdfFilePath}`);
+            logger.info(`Full transcript saved as text: ${txtFilePath}`);
+            logger.info(`Full transcript saved as PDF: ${pdfFilePath}`);
 
-        return pdfFilePath;
+            return { transcript: fullTranscript, pdfPath: pdfFilePath };
+        }
     }
+    return undefined;
 }

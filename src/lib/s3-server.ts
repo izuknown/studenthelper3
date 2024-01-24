@@ -1,6 +1,7 @@
 import { S3 } from '@aws-sdk/client-s3';
 import fs from 'fs';
 import path from 'path';
+import { Readable } from 'stream';
 
 export async function downloadFromS3(file_key: string) {
     try {
@@ -20,7 +21,8 @@ export async function downloadFromS3(file_key: string) {
         const { Body } = await s3.getObject(params);
 
         const tmpDir = 'C:\\tmp';  // Adjust the directory as per your OS and requirements
-        const fileName = path.join(tmpDir, `${Date.now()}.txt`); // Example, you can change the extension
+        const fileExtension = path.extname(file_key);
+        const fileName = path.join(tmpDir, `${Date.now()}${fileExtension}`); // Example, you can change the extension
 
         if (!fs.existsSync(tmpDir)) {
             fs.mkdirSync(tmpDir);
@@ -28,8 +30,15 @@ export async function downloadFromS3(file_key: string) {
 
         if (Body instanceof Buffer) {
             fs.writeFileSync(fileName, Body);
+        } else if (Body instanceof Readable) {
+            // Handle the stream
+            const fileStream = fs.createWriteStream(fileName);
+            for await (const chunk of Body) {
+                fileStream.write(chunk);
+            }
+            fileStream.end();
         } else {
-            console.error('Received data is not a buffer');
+            console.error('Received data is not a buffer or a readable stream');
             return null;
         }
 
