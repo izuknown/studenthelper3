@@ -2,7 +2,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import OpenAI from 'openai';
 import { Readable } from 'stream';
-import PDFDocument from 'pdfkit';
+import FormData from 'form-data';
+import PDFDocument from 'pdfkit'
+import fetch from 'node-fetch';
 
 const openai = new OpenAI({
     apiKey: process.env['OPENAI_API_KEY'],
@@ -14,41 +16,70 @@ export interface TranscriptionResult {
 }
 
 function saveTranscriptAsPDF(transcript: string, pdfFilePath: string) {
-    const doc = new PDFDocument();
-    doc.pipe(fs.createWriteStream(pdfFilePath));
-    doc.font('Times-Roman')
-       .fontSize(12)
-       .text(transcript, {
-           align: 'left',
-           indent: 20,
-           height: 300,
-           ellipsis: true
-       });
-    doc.end();
-}
-
-async function transcribeChunk(fileStream: Readable): Promise<string> {
     try {
-        const transcriptResponse = await openai.audio.transcriptions.create({
-            model: 'whisper-1',
-            file: {
-                buffer: fileStream,
-                options: {
-                    filename: 'chunk.wav',
-                    contentType: 'audio/wav'
-                }
-            }
-        } as any);
-
-        console.log('Chunk transcription response received');
-        console.log('Chunk Transcription:', JSON.stringify(transcriptResponse, null, 2));
-
-        return transcriptResponse.data.transcript || 'No transcript available';
+        const doc = new PDFDocument();
+        doc.pipe(fs.createWriteStream(pdfFilePath));
+        doc.font('Times-Roman') // Use a standard font
+           .fontSize(12)
+           .text(transcript, {
+               align: 'left',
+               indent: 20,
+               height: 300,
+               ellipsis: true
+           });
+        doc.end();
     } catch (error) {
-        console.error(`Error during chunk transcription: ${error}`);
-        return '';
+        console.error('Error creating PDF:', error);
+        // Handle the error, perhaps by informing the user or attempting an alternative solution
     }
 }
+
+interface TranscriptionResponse {
+    text?: string;
+    error?: {
+        message: string;
+        type: string;
+        param: string | null;
+        code: string | null;
+    };
+}
+
+async function transcribeChunk(filePath: string, start: number, end: number, retryCount = 3): Promise<string> {
+    let attempts = 0;
+    while (attempts < retryCount) {
+        try {
+            const fileStream = fs.createReadStream(filePath, { start, end });
+            const formData = new FormData();
+            formData.append('file', fileStream);
+            formData.append('model', 'whisper-1');
+
+            const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${process.env['OPENAI_API_KEY']}`,
+                    ...formData.getHeaders()
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.error) {
+                console.error(`Error in transcription attempt ${attempts + 1}:`, result.error.message);
+                attempts++;
+                continue;
+            }
+
+            return result.text || 'No transcript available';
+        } catch (error) {
+            console.error(`Error during chunk transcription attempt ${attempts + 1}: ${error}`);
+            attempts++;
+        }
+    }
+    return '';
+}
+
+
 
 export async function transcribeAndExtract(audioFile: string): Promise<TranscriptionResult | undefined> {
     if (audioFile) {
@@ -60,8 +91,8 @@ export async function transcribeAndExtract(audioFile: string): Promise<Transcrip
 
         while (currentPosition < totalSize) {
             console.log(`Processing chunk starting at position ${currentPosition}`);
-            const fileStream = fs.createReadStream(audioFile, { start: currentPosition, end: currentPosition + CHUNK_SIZE - 1 });
-            const transcript = await transcribeChunk(fileStream);
+            const endPosition = Math.min(currentPosition + CHUNK_SIZE, totalSize);
+            const transcript = await transcribeChunk(audioFile, currentPosition, endPosition);
             fullTranscript += transcript;
             currentPosition += CHUNK_SIZE;
         }
