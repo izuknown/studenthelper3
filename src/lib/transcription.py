@@ -1,4 +1,4 @@
-""" import math
+"""import math
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from moviepy.editor import VideoFileClip
 from dotenv import load_dotenv
@@ -103,7 +103,7 @@ from dotenv import load_dotenv
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from pydub import AudioSegment
 import openai
-from fpdf import FPDF  # Import FPDF for PDF generation
+from fpdf import FPDF  
 
 # Load environment variables
 load_dotenv()
