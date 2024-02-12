@@ -2,21 +2,13 @@
 import { Pinecone } from '@pinecone-database/pinecone';
 import { downloadFromS3 } from './s3-server';
 import { transcribeAndExtract, TranscriptionResult } from './transcription';
-import fs from 'fs'; // Corrected import statement
+import fs from 'fs';
 import { getEmbeddings } from "./embeddings";
 
-// Add any additional imports needed for Pinecone's API
-
-let pinecone: Pinecone | null = null;
-
-export const getPineconeClient = async () => {
-    if (!pinecone) {
-        pinecone = new Pinecone({
-            apiKey: process.env.PINECONE_API_KEY!,
-        });
-    }
-    return pinecone;
-};
+// Initialize Pinecone client with the API key
+const pineconeClient = new Pinecone({
+    apiKey: process.env.PINECONE_API_KEY!,
+});
 
 export async function loadS3IntoPinecone(file_key: string) {
     try {
@@ -39,23 +31,26 @@ export async function loadS3IntoPinecone(file_key: string) {
 
         // Loading the transcription text into Pinecone
         console.log('Loading transcription text into Pinecone');
-        const pineconeClient = await getPineconeClient();
 
-        // Use the `embeddings` function to generate vectors from the transcribed text
-        const vector = await embeddings(transcriptionResult.transcript); // Adjust this call as necessary
+        // Use the `getEmbeddings` function to generate vectors from the transcribed text
+        const vector = await getEmbeddings(transcriptionResult.transcript);
 
         // Construct the record for Pinecone with the obtained vector
         const record = {
             id: file_key, // Unique identifier
-            vector: vector, // The vector representation obtained from `embeddings`
+            values: vector, // The vector representation obtained from `getEmbeddings`
             metadata: {
                 title: "Transcribed Document", // Example metadata
-                pdfUrl: "URL_to_the_uploaded_PDF" // URL to the uploaded PDF, if applicable
+                pdfUrl: transcriptionResult.pdfPath // Use the actual PDF path
             }
         };
 
+        // Target the specific index where you want to upsert the record
+        const indexName = 'studenthelper3'; 
+        const index = pineconeClient.index(indexName);
+
         // Insert the vector record into Pinecone
-        const result = await pineconeClient.upsert([record]);
+        const result = await index.upsert([record]);
         console.log('Transcription text loaded into Pinecone:', result);
 
     } catch (error) {

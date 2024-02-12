@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const OpenAI = require('openai');
 const FormData = require('form-data');
-const PDFDocument = require('pdfkit');
+import PDFDocument from 'pdfkit';
 import fetch from 'node-fetch';
 const ffmpeg = require('fluent-ffmpeg');
 
@@ -21,16 +21,8 @@ function saveTranscriptAsPDF(transcript: string, pdfFilePath: string) {
         const doc = new PDFDocument();
         const stream = fs.createWriteStream(pdfFilePath); // Capture stream for listening to events
         doc.pipe(stream);
-        doc.font('Times-Roman')
-           .fontSize(12)
-           .text(transcript, {
-               align: 'left',
-               indent: 20,
-               height: 300,
-               ellipsis: true
-           });
         doc.end();
-        console.log("PDF content written, ending document."); // Added log
+        console.log("PDF content written, ending document."); // added log
         
         stream.on('finish', () => {
             console.log(`PDF saved successfully at ${pdfFilePath}`); // Added log

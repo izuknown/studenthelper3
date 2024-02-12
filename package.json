@@ -32,6 +32,7 @@
     "node-fetch": "^3.3.2",
     "node-wav": "^0.0.2",
     "openai": "^4.24.7",
+    "openai-edge": "^1.2.2",
     "pdf-parse": "^1.1.1",
     "pdfkit": "^0.14.0",
     "pg": "^8.11.3",
