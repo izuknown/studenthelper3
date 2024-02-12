@@ -3,7 +3,7 @@ const path = require('path');
 const OpenAI = require('openai');
 const FormData = require('form-data');
 const PDFDocument = require('pdfkit');
-const fetch = require('node-fetch');
+import fetch from 'node-fetch';
 const ffmpeg = require('fluent-ffmpeg');
 
 const openai = new OpenAI({
@@ -16,10 +16,12 @@ export interface TranscriptionResult {
 }
 
 function saveTranscriptAsPDF(transcript: string, pdfFilePath: string) {
+    console.log("Entering saveTranscriptAsPDF"); // Added log
     try {
         const doc = new PDFDocument();
-        doc.pipe(fs.createWriteStream(pdfFilePath));
-        doc.font('Times-Roman') // Use a standard font
+        const stream = fs.createWriteStream(pdfFilePath); // Capture stream for listening to events
+        doc.pipe(stream);
+        doc.font('Times-Roman')
            .fontSize(12)
            .text(transcript, {
                align: 'left',
@@ -28,6 +30,15 @@ function saveTranscriptAsPDF(transcript: string, pdfFilePath: string) {
                ellipsis: true
            });
         doc.end();
+        console.log("PDF content written, ending document."); // Added log
+        
+        stream.on('finish', () => {
+            console.log(`PDF saved successfully at ${pdfFilePath}`); // Added log
+        });
+
+        stream.on('error', (err: Error) => {
+            console.error(`Error saving PDF: ${err}`); // Added log
+        });
     } catch (error) {
         console.error('Error creating PDF:', error);
     }
@@ -49,10 +60,21 @@ function convertMp4ToMp3(inputPath: string, outputPath: string): Promise<string>
     });
 }
 
-async function transcribeChunk(filePath: string, start: number, end: number, retryCount = 3): Promise<string> {
+interface TranscriptionResponse {
+    text?: string;
+    error?: {
+        message: string;
+        type: string;
+        param?: string;
+        code?: string;
+    };
+}
+
+async function transcribeChunk(filePath: string, start: number, end: number, retryCount = 3): Promise<string>{
     let attempts = 0;
     while (attempts < retryCount) {
         try {
+            console.log('transcribe chunk function activated')
             const fileStream = fs.createReadStream(filePath, { start, end });
             const formData = new FormData();
             formData.append('file', fileStream);
@@ -85,6 +107,7 @@ async function transcribeChunk(filePath: string, start: number, end: number, ret
 }
 
 export async function transcribeAndExtract(audioFile: string): Promise<TranscriptionResult | undefined> {
+    console.log("Entering transcribeAndExtract"); 
     if (!audioFile) {
         console.error('No audio file provided for transcription');
         return undefined;
@@ -98,6 +121,7 @@ export async function transcribeAndExtract(audioFile: string): Promise<Transcrip
 
         // Convert MP4 to MP3
         try {
+            console.log('converting mp4 to mp3')
             await convertMp4ToMp3(audioFile, mp3FilePath);
             console.log('File converted successfully');
             fileToTranscribe = mp3FilePath;

@@ -2,6 +2,9 @@
 import { Pinecone } from '@pinecone-database/pinecone';
 import { downloadFromS3 } from './s3-server';
 import { transcribeAndExtract, TranscriptionResult } from './transcription';
+import fs from 'fs'; // Corrected import statement
+import { getEmbeddings } from "./embeddings";
+
 // Add any additional imports needed for Pinecone's API
 
 let pinecone: Pinecone | null = null;
@@ -26,7 +29,7 @@ export async function loadS3IntoPinecone(file_key: string) {
 
         // Transcribe the file
         console.log('File downloaded from S3:', file_name);
-        const transcriptionResult = await transcribeAndExtract(file_name) as TranscriptionResult;
+        const transcriptionResult = await transcribeAndExtract(file_name);
         if (!transcriptionResult) {
             throw new Error('Could not transcribe the file or generate PDF');
         }
@@ -34,15 +37,26 @@ export async function loadS3IntoPinecone(file_key: string) {
         console.log('Transcription:', transcriptionResult.transcript);
         console.log('Transcription saved as PDF:', transcriptionResult.pdfPath);
 
+        // Loading the transcription text into Pinecone
+        console.log('Loading transcription text into Pinecone');
+        const pineconeClient = await getPineconeClient();
 
+        // Use the `embeddings` function to generate vectors from the transcribed text
+        const vector = await embeddings(transcriptionResult.transcript); // Adjust this call as necessary
 
-        // 3. Load the transcription into Pinecone (assuming the transcription is in a suitable format)
-        // console.log('Loading transcription into Pinecone');
-        // const pineconeClient = await getPineconeClient();
+        // Construct the record for Pinecone with the obtained vector
+        const record = {
+            id: file_key, // Unique identifier
+            vector: vector, // The vector representation obtained from `embeddings`
+            metadata: {
+                title: "Transcribed Document", // Example metadata
+                pdfUrl: "URL_to_the_uploaded_PDF" // URL to the uploaded PDF, if applicable
+            }
+        };
 
-        // Assuming you have a function in Pinecone to load data, adjust accordingly
-        // const result = await pineconeClient.loadData(pdfPath, { /* other options */ });
-        // console.log('Transcription loaded into Pinecone:');
+        // Insert the vector record into Pinecone
+        const result = await pineconeClient.upsert([record]);
+        console.log('Transcription text loaded into Pinecone:', result);
 
     } catch (error) {
         console.error('Error:', error);
