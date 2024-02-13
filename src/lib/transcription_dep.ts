@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const OpenAI = require('openai');
 const FormData = require('form-data');
+import PDFDocument from 'pdfkit';
 import fetch from 'node-fetch';
 const ffmpeg = require('fluent-ffmpeg');
 
@@ -11,10 +12,31 @@ const openai = new OpenAI({
 
 export interface TranscriptionResult {
     transcript: string;
-    txtFilePath: string; // Change from pdfPath to txtFilePath
+    pdfPath: string;
 }
 
-function convertMp4ToMp3(inputPath: string, outputPath: string): Promise<string> {
+function saveTranscriptAsPDF(transcript: string, pdfFilePath: string) {
+    console.log("Entering saveTranscriptAsPDF"); // Added log
+    try {
+        const doc = new PDFDocument();
+        const stream = fs.createWriteStream(pdfFilePath); // Capture stream for listening to events
+        doc.pipe(stream);
+        doc.end();
+        console.log("PDF content written, ending document."); // added log
+        
+        stream.on('finish', () => {
+            console.log(`PDF saved successfully at ${pdfFilePath}`); // Added log
+        });
+
+        stream.on('error', (err: Error) => {
+            console.error(`Error saving PDF: ${err}`); // Added log
+        });
+    } catch (error) {
+        console.error('Error creating PDF:', error);
+    }
+}
+
+function convertMp4ToMp3(inputPath: string, outputPath: string): Promise<string>{
     return new Promise((resolve, reject) => {
         ffmpeg(inputPath)
             .toFormat('mp3')
@@ -22,7 +44,7 @@ function convertMp4ToMp3(inputPath: string, outputPath: string): Promise<string>
                 console.log('Conversion finished.');
                 resolve(outputPath);
             })
-            .on('error', (err: Error) => {
+            .on('error', (err:Error) => {
                 console.error('Error:', err);
                 reject(err);
             })
@@ -30,10 +52,21 @@ function convertMp4ToMp3(inputPath: string, outputPath: string): Promise<string>
     });
 }
 
-async function transcribeChunk(filePath: string, start: number, end: number, retryCount = 3): Promise<string> {
+interface TranscriptionResponse {
+    text?: string;
+    error?: {
+        message: string;
+        type: string;
+        param?: string;
+        code?: string;
+    };
+}
+
+async function transcribeChunk(filePath: string, start: number, end: number, retryCount = 3): Promise<string>{
     let attempts = 0;
     while (attempts < retryCount) {
         try {
+            console.log('transcribe chunk function activated')
             const fileStream = fs.createReadStream(filePath, { start, end });
             const formData = new FormData();
             formData.append('file', fileStream);
@@ -66,6 +99,7 @@ async function transcribeChunk(filePath: string, start: number, end: number, ret
 }
 
 export async function transcribeAndExtract(audioFile: string): Promise<TranscriptionResult | undefined> {
+    console.log("Entering transcribeAndExtract"); 
     if (!audioFile) {
         console.error('No audio file provided for transcription');
         return undefined;
@@ -75,10 +109,13 @@ export async function transcribeAndExtract(audioFile: string): Promise<Transcrip
 
     // Check if the file is an MP4 file
     if (path.extname(audioFile).toLowerCase() === '.mp4') {
-        // Convert MP4 to MP3
         const mp3FilePath = audioFile.replace(path.extname(audioFile), '.mp3');
+
+        // Convert MP4 to MP3
         try {
+            console.log('converting mp4 to mp3')
             await convertMp4ToMp3(audioFile, mp3FilePath);
+            console.log('File converted successfully');
             fileToTranscribe = mp3FilePath;
         } catch (err) {
             console.error('Error converting file:', err);
@@ -86,13 +123,14 @@ export async function transcribeAndExtract(audioFile: string): Promise<Transcrip
         }
     }
 
-    // Transcription logic remains the same
     const CHUNK_SIZE = 20 * 1024 * 1024; // 20 MB
-    const totalSize = fs.statSync(fileToTranscribe).size;
+    const fileStats = fs.statSync(fileToTranscribe);
+    const totalSize = fileStats.size;
     let currentPosition = 0;
     let fullTranscript = '';
 
     while (currentPosition < totalSize) {
+        console.log(`Processing chunk starting at position ${currentPosition}`);
         const endPosition = Math.min(currentPosition + CHUNK_SIZE, totalSize);
         const transcript = await transcribeChunk(fileToTranscribe, currentPosition, endPosition);
         fullTranscript += transcript;
@@ -100,12 +138,16 @@ export async function transcribeAndExtract(audioFile: string): Promise<Transcrip
     }
 
     if (fullTranscript) {
-        // Save transcript as a .txt file instead of a PDF
+        console.log('Transcription of all chunks complete');
         const txtFilePath = `/tmp/full_transcript-${Date.now()}.txt`;
         fs.writeFileSync(txtFilePath, fullTranscript, 'utf-8');
         console.log(`Transcript saved as text file at: ${txtFilePath}`);
 
-        return { transcript: fullTranscript, txtFilePath: txtFilePath };
+        const pdfFilePath = `/tmp/full_transcript-${Date.now()}.pdf`;
+        saveTranscriptAsPDF(fullTranscript, pdfFilePath);
+        console.log(`Transcript saved as PDF at: ${pdfFilePath}`);
+
+        return { transcript: fullTranscript, pdfPath: pdfFilePath };
     }
 
     return undefined;

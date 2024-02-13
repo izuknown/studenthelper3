@@ -1,4 +1,4 @@
-import { loadS3IntoPinecone } from "@/lib/pinecone";
+import { loadS3IntoPinecone } from "@/lib/pinecone_dep";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request, res: Response) {

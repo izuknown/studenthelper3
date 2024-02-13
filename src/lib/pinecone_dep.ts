@@ -1,8 +1,11 @@
+// Import necessary modules
 import { Pinecone } from '@pinecone-database/pinecone';
 import { downloadFromS3 } from './s3-server';
-import { transcribeAndExtract, TranscriptionResult } from './transcription';
-import fs from 'fs'; // Assuming this is still needed elsewhere in your code
+import { transcribeAndExtract, TranscriptionResult } from './transcription_dep';
+import fs from 'fs';
 import { getEmbeddings } from "./embeddings";
+import path from 'path';
+
 
 // Initialize Pinecone client with the API key
 const pineconeClient = new Pinecone({
@@ -22,14 +25,16 @@ export async function loadS3IntoPinecone(file_key: string) {
         console.log('File downloaded from S3:', file_name);
         const transcriptionResult = await transcribeAndExtract(file_name);
         if (!transcriptionResult) {
-            console.error('Could not transcribe the file');
-            return; // Exit if transcription failed
+            throw new Error('Could not transcribe the file or generate PDF');
         }
 
-        // Log transcription result
         console.log('Transcription:', transcriptionResult.transcript);
+        console.log('Transcription saved as PDF:', transcriptionResult.pdfPath);
 
-        // Assuming getEmbeddings can handle text directly for simplicity
+        // Loading the transcription text into Pinecone
+        console.log('Loading transcription text into Pinecone');
+
+        // Use the `getEmbeddings` function to generate vectors from the transcribed text
         const vector = await getEmbeddings(transcriptionResult.transcript);
 
         // Construct the record for Pinecone with the obtained vector
@@ -37,8 +42,8 @@ export async function loadS3IntoPinecone(file_key: string) {
             id: file_key, // Unique identifier
             values: vector, // The vector representation obtained from `getEmbeddings`
             metadata: {
-                title: "Transcribed Document", // Example metadata
-                txtUrl: transcriptionResult.txtFilePath // Adjusted to use txtFilePath
+                title: path.basename(file_name), // Example metadata
+                pdfUrl: transcriptionResult.pdfPath // Use the actual PDF path
             }
         };
 
