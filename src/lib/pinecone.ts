@@ -3,11 +3,14 @@ import { downloadFromS3 } from './s3-server';
 import { transcribeAndExtract, TranscriptionResult } from './transcription';
 import fs from 'fs'; // Assuming this is still needed elsewhere in your code
 import { getEmbeddings } from "./embeddings";
+import {PDFLoader} from 'langchain/document_loaders/fs/pdf'
 
 // Initialize Pinecone client with the API key
 const pineconeClient = new Pinecone({
     apiKey: process.env.PINECONE_API_KEY!,
 });
+
+
 
 export async function loadS3IntoPinecone(file_key: string) {
     try {
