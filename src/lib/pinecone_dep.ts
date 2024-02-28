@@ -1,7 +1,7 @@
 // Import necessary modules
 import { Pinecone } from '@pinecone-database/pinecone';
 import { downloadFromS3 } from './s3-server';
-import { transcribeAndExtract, TranscriptionResult } from './transcription_dep';
+import { transcribeAndExtract, TranscriptionResult } from './transcription';
 import fs from 'fs';
 import { getEmbeddings } from "./embeddings";
 import path from 'path';
@@ -29,7 +29,7 @@ export async function loadS3IntoPinecone(file_key: string) {
         }
 
         console.log('Transcription:', transcriptionResult.transcript);
-        console.log('Transcription saved as PDF:', transcriptionResult.pdfPath);
+        console.log('Transcription saved as .txt:', transcriptionResult.txtFilePath);
 
         // Loading the transcription text into Pinecone
         console.log('Loading transcription text into Pinecone');
@@ -43,7 +43,7 @@ export async function loadS3IntoPinecone(file_key: string) {
             values: vector, // The vector representation obtained from `getEmbeddings`
             metadata: {
                 title: path.basename(file_name), // Example metadata
-                pdfUrl: transcriptionResult.pdfPath // Use the actual PDF path
+                pdfUrl: transcriptionResult.txtFilePath // Use the actual PDF path
             }
         };
 

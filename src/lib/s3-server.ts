@@ -20,7 +20,7 @@ export async function downloadFromS3(file_key: string) {
 
         const { Body } = await s3.getObject(params);
 
-        const tmpDir = 'C:\\tmp';  // Adjust the directory as per your OS and requirements
+        const tmpDir = 'C://tmp';  // Adjust the directory as per your OS and requirements
         const fileExtension = path.extname(file_key);
         const fileName = path.join(tmpDir, `${Date.now()}${fileExtension}`); // Example, you can change the extension
 
