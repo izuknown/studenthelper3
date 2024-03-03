@@ -81,13 +81,13 @@ const FileUpload = () => {
             {/* loading state */}
             <Loader2 className='h-10 w-10 text-yellow-600 animate-spin'/>
             <p className='mt-2 text-sm text-slate-400'>
-              Spilling tea to chatGPT...
+              Preparing your tutor now. Please wait...
             </p>
           </>
         ):(
           <>
             <Inbox className="w-10 h-10 text-yellow-600" />
-            <p className='mt-1 text-yellow-600'>Drop recording here</p>
+            <p className='mt-1 text-yellow-600'>Drop your lesson recording here</p>
         </>
         ) } 
       </div>

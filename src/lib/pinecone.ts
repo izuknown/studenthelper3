@@ -12,14 +12,14 @@ const pineconeClient = new Pinecone({
 
 export async function loadS3IntoPinecone(file_key: string) {
     try {
-        // Download the file from S3
+        // 1. Download the file from S3
         console.log('Downloading S3 file into the file system');
         const file_name = await downloadFromS3(file_key);
         if (!file_name) {
             throw new Error("Could not download from S3");
         }
 
-        // Transcribe the file
+        // 2. Transcribe the file and save as txt (ideally pdf)
         console.log('File downloaded from S3:', file_name);
         const transcriptionResult = await transcribeAndExtract(file_name);
         if (!transcriptionResult) {
@@ -29,6 +29,12 @@ export async function loadS3IntoPinecone(file_key: string) {
 
         // Log transcription result
         console.log('Transcription:', transcriptionResult.transcript);
+
+        // 3. split and segment the txt(pdf)
+
+        // 4. vectorise and embed individual documents 
+
+        // 5. upload to pinecone 
 
         // Assuming getEmbeddings can handle text directly for simplicity
         const vector = await getEmbeddings(transcriptionResult.transcript);
