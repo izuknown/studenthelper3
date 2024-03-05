@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
 
+
 export async function downloadFromS3(file_key: string) {
     try {
         const s3 = new S3({
@@ -43,6 +44,7 @@ export async function downloadFromS3(file_key: string) {
         }
 
         return fileName;
+
     } catch (error) {
         console.error('Error downloading from S3:', error);
         return null;

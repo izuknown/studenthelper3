@@ -50,20 +50,18 @@ const FileUpload = () => {
         }
         mutate(data, {
           onSuccess: (data) =>{
-            console.log(data)
-            //toast.success("File uploadedd succesfully");
+            toast.success(data.message);
           },
           onError: (err) => {
             toast.error("Error creating chat");
-          } 
-        })
+          }, 
+        });
         console.log('After UploadToS3, data:', data);
       } catch (error) {
         console.log('Error in FileUpload:', error);
       } finally {
-        setUploading(false)
-      }
-      
+        setUploading(false);
+      }      
     },
 
   });
@@ -76,7 +74,7 @@ const FileUpload = () => {
         })}
       >
         <input {...getInputProps()} />
-        {(uploading || isPending) ?(
+        {uploading || isPending ?(
           <>
             {/* loading state */}
             <Loader2 className='h-10 w-10 text-yellow-600 animate-spin'/>
@@ -92,7 +90,7 @@ const FileUpload = () => {
         ) } 
       </div>
     </div>
-  )
+  );
 };
 
 export default FileUpload;

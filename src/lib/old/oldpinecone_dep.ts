@@ -1,6 +1,6 @@
 // Import necessary modules
 import { Pinecone } from '@pinecone-database/pinecone';
-import { downloadFromS3 } from './s3-server';
+import { downloadFromS3 } from './olds3-server';
 import { transcribeAndExtract, TranscriptionResult } from './transcription';
 import fs from 'fs';
 import { getEmbeddings } from "./embeddings";

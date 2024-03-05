@@ -1,5 +1,5 @@
 import { Pinecone } from '@pinecone-database/pinecone';
-import { downloadFromS3 } from './s3-server';
+import { downloadFromS3 } from './olds3-server';
 import { transcribeAndExtract, TranscriptionResult } from './transcription';
 import { getEmbeddings } from "./embeddings";
 
@@ -38,7 +38,7 @@ export async function loadS3IntoPinecone(file_key: string) {
 
         // Assuming getEmbeddings can handle text directly for simplicity
         const vector = await getEmbeddings(transcriptionResult.transcript);
-
+        {/*
         // Construct the record for Pinecone with the obtained vector
         const record = {
             id: file_key, // Unique identifier
@@ -56,7 +56,7 @@ export async function loadS3IntoPinecone(file_key: string) {
         // Insert the vector record into Pinecone
         const result = await index.upsert([record]);
         console.log('Transcription text loaded into Pinecone:', result);
-
+        */}
     } catch (error) {
         console.error('Error:', error);
     }
