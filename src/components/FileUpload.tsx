@@ -62,7 +62,8 @@ const FileUpload = () => {
       } finally {
         setUploading(false);
       }      
-    },
+    }, 
+
 
   });
   return (

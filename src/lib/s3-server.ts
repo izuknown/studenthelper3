@@ -1,11 +1,12 @@
-import { S3 } from '@aws-sdk/client-s3';
+import {S3} from '@aws-sdk/client-s3';
 import fs from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
 
-
-export async function downloadFromS3(file_key: string) {
+// Take a file_key and downlaod the file to local computer
+export async function downloadFromS3(file_key : string){
     try {
+        // initialise S3
         const s3 = new S3({
             region: 'eu-west-2',
             credentials: {
@@ -21,9 +22,11 @@ export async function downloadFromS3(file_key: string) {
 
         const { Body } = await s3.getObject(params);
 
+        const obj = await s3.getObject(params); // Abstract out file from S3
         const tmpDir = `C://tmp/`;  // Adjust the directory as per your OS and requirements
         const fileExtension = path.extname(file_key);
         const fileName = path.join(tmpDir, `${Date.now()}${fileExtension}`); // Example, you can change the extension
+        console.log('Name of file:', fileName)
 
         if (!fs.existsSync(tmpDir)) {
             fs.mkdirSync(tmpDir);
@@ -44,9 +47,12 @@ export async function downloadFromS3(file_key: string) {
         }
 
         return fileName;
+        
 
     } catch (error) {
-        console.error('Error downloading from S3:', error);
-        return null;
+        console.error('Error downloading from S3:', error)
+        return null
     }
-}
+}   
+
+
