@@ -27,10 +27,9 @@ const FileUpload = () => {
 
   const { getRootProps, getInputProps } = useDropzone({
     accept: {
-      'application/pdf': ['.pdf'],
       'video/mp4': ['.mp4','.MP4'],
-      'mp3audio/mp3':['.mp3', '.MP3'],
-      'wavaudio/wav': ['.wav', '.WAV']
+      'audio/mp3':['.mp3', '.MP3'],
+      'audio/wav': ['.wav', '.WAV']
     },
     maxFiles: 1,
     onDrop: async (acceptedFiles) => {
@@ -45,15 +44,17 @@ const FileUpload = () => {
         console.log('Before UploadToS3');
         const data = await UploadToS3(file);
         if (!data?.file_key || !data.file_name){
-          toast.error("Somthing has gone wrong");
+          toast.error("Somthing has gone wrong, there is no file key or file name");
           return;
         }
         mutate(data, {
           onSuccess: (data) =>{
+            console.log (data);
             toast.success(data.message);
           },
           onError: (err) => {
             toast.error("Error creating chat");
+            console.log('error creating chat', err)
           }, 
         });
         console.log('After UploadToS3, data:', data);

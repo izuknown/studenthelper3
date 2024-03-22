@@ -1,4 +1,3 @@
-1. Delete the saved docs on AWS
-2. change the metadata of th file uploaded to pinecone to the name of the file downloaded from S3
-3. Review progress and start with the next section. 
-4. 
+The file file is being uploaded and then downloaded but there doesn't appear to be any transcription taking place. Review the code up until the transctiption stage. 
+Add console.logs throughout to see where it is breaking. 
+GET CODE TO TRANSCRIBE THE text. 
