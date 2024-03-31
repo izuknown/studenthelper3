@@ -1,48 +1,101 @@
-import { Pinecone } from '@pinecone-database/pinecone';
-import { UploadToS3 } from './s3';
+import { Pinecone, Vector } from '@pinecone-database/pinecone';
+import fs from 'fs';
 import { downloadFromS3 } from './s3-server';
-import { transcribeAndExtract, TranscriptionResult } from './transcription'; // Import transcribeAndExtract from transcription.ts
+import { transcribeAndExtract, TranscriptionResult } from './transcription';
+import { getEmbeddings } from './embeddings';
+import dotenv from 'dotenv'; 
+import md5 from 'md5';
+import {PDFLoader} from 'langchain/document_loaders/fs/pdf';
+import { Document, RecursiveCharacterTextSplitter } from '@pinecone-database/doc-splitter';
+import { convertToAscii } from './utils';
 
-// Note: Import OpenAI using CommonJS syntax since it's imported that way in transcription.ts
-const OpenAI = require('openai');
+// Load environment variables from .env file
+dotenv.config();
 
-// Initialise Pinecone
+// Initialise Pinecone with the API key from the environment variables
 const pineconeClient = new Pinecone({
     apiKey: process.env.PINECONE_API_KEY!,
 });
 
 export async function loadS3IntoPinecone(fileKey: string) {
     try {
-        // Create an instance of OpenAI
-        const openai = new OpenAI({
-            apiKey: process.env['OPENAI_API_KEY'],
-        });
-
-        // Upload the file to S3
-        console.log('Uploading file to S3...');
-        const s3Data = await UploadToS3(fileKey);
-        if (!s3Data) {
-            throw new Error("Could not upload file to S3");
-        }
-        console.log('File uploaded to S3:', s3Data);
-
-        // Download the file from S3
+        // Download the file from S3 using the key
         console.log('Downloading file from S3...');
-        const filePath = await downloadFromS3(s3Data.file_key);
+        const filePath = await downloadFromS3(fileKey);
         if (!filePath) {
             throw new Error("Could not download file from S3");
         }
         console.log('File downloaded from S3:', filePath);
 
-        // Transcribe the downloaded media file using OpenAI
+        // Transcribe the downloaded media file
         const transcriptionResult: TranscriptionResult | undefined = await transcribeAndExtract(filePath);
+        if (!transcriptionResult) {
+            throw new Error("Could not transcribe the file");
+        }
 
-        // Perform additional processing steps if needed
+        if (transcriptionResult) {
+            console.log(transcriptionResult)
+        }
 
-        // Return the transcription data
+        // vectorise and embed the full transcript
+        const embeddings = await getEmbeddings(transcriptionResult.transcript);
+        const hash = md5(transcriptionResult.transcript);
+
+        // upload to pinecone
+        const client = await pineconeClient;
+        const pineconeIndex = client.Index('studenthelper3');
+
+        console.log('Inserting transcript into pinecone');
+        const namespace = convertToAscii(fileKey);
+        await pineconeIndex.upsert([{ id: hash, values: embeddings } as Vector]);
+
         return transcriptionResult;
+
     } catch (error) {
-        console.error('Error loading S3 file into Pinecone:', error);
+        console.error('Error loading S3 file:', error);
         throw error; // Propagate the error to the caller
     }
+}
+
+async function embedDocuments (doc: Document) {
+    try {
+        const embeddings = await getEmbeddings(doc.pageContent)
+        const hash = md5(doc.pageContent)
+
+        return {
+            id: hash,
+            values: embeddings,
+            metadata: {
+                text: doc.metadata.text,
+                pageNumber: doc.metadata.pageNumber
+            }
+        } as Vector
+    } catch (error) {
+        console.log ('error with embedding docuemnts from pinecone.ts line 69', error)
+        throw error
+    }
+}
+
+export const truncateStringByBytes = (str: string, bytes: number)=> {
+    const enc = new TextEncoder()
+    return new TextDecoder('utf-8').decode(enc.encode(str).slice(0, bytes))
+}
+
+async function prepareText(fullTranscript: string): Promise<Document[]> {
+    // Truncate the full transcript to fit within a certain number of bytes (36000 bytes in this case)
+    const truncatedText = truncateStringByBytes(fullTranscript, 36000);
+
+    // Split the transcript into documents
+    const splitter = new RecursiveCharacterTextSplitter();
+    const documents = await splitter.splitDocuments([
+        new Document({
+            pageContent: truncatedText,
+            metadata: {
+                text: truncatedText,
+                // You may want to add additional metadata here if needed
+            }
+        })
+    ]);
+
+    return documents;
 }

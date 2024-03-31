@@ -1,9 +1,10 @@
-const fs = require('fs');
+const  fs = require('fs');
 const path = require('path');
 const OpenAI = require('openai');
 const FormData = require('form-data');
 import fetch from 'node-fetch';
 const ffmpeg = require('fluent-ffmpeg');
+import { saveTranscriptionAsPDF } from './utils';
 
 const openai = new OpenAI({
     apiKey: process.env['OPENAI_API_KEY'],
@@ -11,7 +12,8 @@ const openai = new OpenAI({
 
 export interface TranscriptionResult {
     transcript: string;
-    txtFilePath: string; // Change from pdfPath to txtFilePath
+    txtFilePath: string;
+    pdfFilePath: string | null;
 }
 
 function convertMp4ToMp3(inputPath: string, outputPath: string): Promise<string> {
@@ -105,7 +107,13 @@ export async function transcribeAndExtract(audioFile: string): Promise<Transcrip
         fs.writeFileSync(txtFilePath, fullTranscript, 'utf-8');
         console.log(`Transcript saved as text file at: ${txtFilePath}`);
 
-        return { transcript: fullTranscript, txtFilePath: txtFilePath };
+        const pdfFilePath = await saveTranscriptionAsPDF(fullTranscript, txtFilePath);
+        if (!pdfFilePath) {
+        console.error('Failed to save transcription as PDF.');
+        return undefined;
+        }
+
+        return { transcript: fullTranscript, txtFilePath: txtFilePath, pdfFilePath: pdfFilePath };
     }
 
     return undefined;
