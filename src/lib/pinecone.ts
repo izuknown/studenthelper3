@@ -1,4 +1,4 @@
-import { Pinecone, Vector } from '@pinecone-database/pinecone';
+import { Pinecone} from '@pinecone-database/pinecone';
 import fs from 'fs';
 import { downloadFromS3 } from './s3-server';
 import { transcribeAndExtract, TranscriptionResult } from './transcription';
@@ -34,22 +34,26 @@ export async function loadS3IntoPinecone(fileKey: string) {
         }
 
         if (transcriptionResult) {
-            console.log(transcriptionResult)
+            console.log('Here is the transcription result:........', transcriptionResult)
         }
 
+        //split and segment full transcription
+        const transcribedtext = await Promise.all(
+            Array.isArray(transcriptionResult.transcript)
+                ? transcriptionResult.transcript.map(prepareText)
+                : [prepareText(transcriptionResult.transcript)]
+        );
+
         // vectorise and embed the full transcript
-        const embeddings = await getEmbeddings(transcriptionResult.transcript);
-        const hash = md5(transcriptionResult.transcript);
+        const vectors = await Promise.all(transcribedtext.flat().map(embedDocuments))
 
         // upload to pinecone
         const client = await pineconeClient;
         const pineconeIndex = client.Index('studenthelper3');
 
         console.log('Inserting transcript into pinecone');
-        const namespace = convertToAscii(fileKey);
-        await pineconeIndex.upsert([{ id: hash, values: embeddings } as Vector]);
-
-        return transcriptionResult;
+        await pineconeIndex.upsert(vectors.map(vector => ({ id: vector.id, values: vector.values })));
+        console.log('Completed Inserting transcript into pinecone');
 
     } catch (error) {
         console.error('Error loading S3 file:', error);
@@ -69,7 +73,7 @@ async function embedDocuments (doc: Document) {
                 text: doc.metadata.text,
                 pageNumber: doc.metadata.pageNumber
             }
-        } as Vector
+        } 
     } catch (error) {
         console.log ('error with embedding docuemnts from pinecone.ts line 69', error)
         throw error
@@ -92,7 +96,6 @@ async function prepareText(fullTranscript: string): Promise<Document[]> {
             pageContent: truncatedText,
             metadata: {
                 text: truncatedText,
-                // You may want to add additional metadata here if needed
             }
         })
     ]);

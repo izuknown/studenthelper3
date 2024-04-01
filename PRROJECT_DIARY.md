@@ -169,3 +169,40 @@ async function prepareText(fullTranscript: string): Promise<Document[]> {
 
     return documents;
 }
+
+
+------------------------------------------------------
+
+from route.ts between ----const { file_key, file_name } = body;---- and ----console.log(`Received file_key: ${file_key}, file_name: ${file_name}`);----
+
+        // Validate request body
+        if (!file_key || !file_name) {
+            return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+        }
+      
+
+------------------------------------------------------
+
+EMBEDDINGS.TS File
+
+import { OpenAIApi, Configuration } from "openai-edge";
+
+const config = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+const openai = new OpenAIApi(config);
+
+export async function getEmbeddings(text:string) {
+    try {
+        const response = await openai.createEmbedding({
+            model: 'text-embedding-ada-002',
+            input: text.replace(/\n/g, '')
+        })
+        const result = await response.json()
+        return result.data[0].embedding as number[]
+    } catch (error){
+        console.log('error calling openai api as part of the embedding process (see embedding.ts line 18', error)
+        throw error
+    }
+}

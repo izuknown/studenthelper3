@@ -6,11 +6,11 @@ import React from 'react';
 import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
 import {toast} from 'react-hot-toast';
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation';
 
 const FileUpload = () => {
-  const router = useRouter() 
-  const [uploading, setUploading] = React.useState(false)
+  const router = useRouter();
+  const [uploading, setUploading] = React.useState(false);
   const { mutate, isPending } = useMutation({
     mutationFn: async({
       file_key,
@@ -50,14 +50,20 @@ const FileUpload = () => {
           return;
         }
         mutate(data, {
-          onSuccess: (chat_id) =>{
-            toast.success ("Chat Created");
-            router.push(`/chat/${chat_id}`)
-
+          onSuccess: ({ chat_id }) => {
+            console.log('chat id = ', chat_id);
+            try {
+              router.push(`/chat/${chat_id}`);
+              console.log('Navigating to chat page');
+              toast.success("Chat Created");
+            } catch (error) {
+              console.error('Error navigating to chat page:', error);
+              toast.error("Error navigating to chat page");
+            }
           },
           onError: (err) => {
             toast.error("Error creating chat");
-            console.log('error creating chat', err)
+            console.log('error creating chat', err);
           }, 
         });
         console.log('After UploadToS3, data:', data);
