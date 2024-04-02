@@ -2,6 +2,8 @@ import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
 import { UserButton, auth } from "@clerk/nextjs";
 import { LogIn } from "lucide-react";
+import React from "react";
+import { useClerk } from "@clerk/clerk-react";
 
 export default async function Home() {
   const {userId} = await auth();
@@ -23,7 +25,6 @@ export default async function Home() {
           Join many other students using AI to help them understand their lecture content, get your questions answered, revise for your exams and get essay help with AI
         </p>
 
-
         <div className="w-full mt-4">
 
         </div>
@@ -35,10 +36,12 @@ export default async function Home() {
                 <LogIn className="w-4 h-4 ml-2"/>
               </Button>
             </a>
-          )}
+          )
+          }
         </div>
       </div>
-
     </div>
   )
+  
 }
+
