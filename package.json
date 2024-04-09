@@ -19,7 +19,7 @@
     "@tanstack/react-query": "^5.28.6",
     "@types/fluent-ffmpeg": "^2.1.24",
     "@types/md5": "^2.3.5",
-    "ai": "^3.0.17",
+    "ai": "^3.0.19",
     "ai-react": "^0.0.0",
     "aws-sdk": "^2.1538.0",
     "axios": "^1.6.8",
@@ -36,7 +36,7 @@
     "next": "^14.1.0",
     "node-fetch": "^3.3.2",
     "node-wav": "^0.0.2",
-    "openai": "^4.24.7",
+    "openai": "^4.33.0",
     "openai-edge": "^1.2.2",
     "pdf-lib": "^1.17.1",
     "pdf-parse": "^1.1.1",
@@ -49,7 +49,8 @@
     "react-query": "^3.39.3",
     "sox-audio": "^0.3.0",
     "tailwind-merge": "^2.2.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/node": "^20.11.5",

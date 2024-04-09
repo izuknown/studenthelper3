@@ -1,5 +1,4 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-import fs from 'fs';
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -7,7 +6,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export async function saveTranscriptionAsPDF(transcription: string, txtFilePath: string): Promise<string | null> {
+export async function saveTranscriptionAsPDF(transcription: string): Promise<Uint8Array | null> {
     try {
         // Create a new PDF document
         const pdfDoc = await PDFDocument.create();
@@ -38,13 +37,9 @@ export async function saveTranscriptionAsPDF(transcription: string, txtFilePath:
             }
         }
 
-        // Save the PDF to a file
-        const pdfFilePath = txtFilePath.replace('.txt', '.pdf');
+        // Save the PDF as a Uint8Array
         const pdfBytes = await pdfDoc.save();
-        fs.writeFileSync(pdfFilePath, pdfBytes);
-
-        console.log(`Transcription saved as PDF file at: ${pdfFilePath}`);
-        return pdfFilePath;
+        return pdfBytes;
     } catch (error) {
         console.error('Error saving transcription as PDF:', error);
         return null;
@@ -52,7 +47,6 @@ export async function saveTranscriptionAsPDF(transcription: string, txtFilePath:
 }
 
 export function convertToAscii (inputString: string) {
-  // remove non ascii characters
   const asciiString = inputString.replace(/[^\x00-\x7F]+/g, "")
   return asciiString;
 }
