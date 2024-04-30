@@ -8,7 +8,8 @@ export const chats = pgTable('chats', {
     contentURL: text('content_url').notNull(),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     userId: varchar('userId', {length:256}).notNull(),
-    fileKey: text('file_key').notNull()
+    fileKey: text('file_key').notNull(),
+    transcriptionurl: text('transcriptionurl'),
  });
 
 export type DrizzleChat = typeof chats.$inferSelect;

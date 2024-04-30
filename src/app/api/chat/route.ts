@@ -2,7 +2,7 @@ import { Configuration, OpenAIApi } from 'openai-edge';
 import {OpenAIStream, StreamingTextResponse} from 'ai'
 import { getContext } from '@/lib/context';
 import { db } from '@/lib/db';
-import { chats } from '@/lib/db/schema';
+import { chats, messages as _messages } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { Message } from 'ai/react';
@@ -22,8 +22,8 @@ export async function POST(req: Request) {
             return NextResponse.json({'error': 'chat not found'}, {status:404}) 
         }
         const fileKey = _chats[0].fileKey
-        const lastmessage = messages[messages.length -1];
-        const context = await getContext(lastmessage.content, fileKey)
+        const lastMessage = messages[messages.length -1];
+        const context = await getContext(lastMessage.content, fileKey)
 
         const prompt = {
             role: "system",
@@ -48,7 +48,24 @@ export async function POST(req: Request) {
             ],
             stream: true
         })
-        const stream = OpenAIStream(response);
+        const stream = OpenAIStream(response, {
+            onStart: async () => {
+                // save user message into db 
+                await db.insert(_messages).values({
+                    chatId,
+                    content: lastMessage.content,
+                    role: 'user'
+                })
+            },
+            onCompletion: async (completion) => {
+                //save ai message to db
+                await db.insert(_messages).values({
+                    chatId,
+                    content: completion,
+                    role: 'system'
+                })
+            }
+        });
         return new StreamingTextResponse(stream);
         
     } catch (error) {

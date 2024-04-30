@@ -3,10 +3,16 @@ import { Message } from 'ai/react'
 import React from 'react'
 
 type Props = {
-    messages: Message[]
-}
+    isLoading: boolean;
+    messages: Message[];
+};
 
-const MessageList = ({messages}: Props) => {
+const MessageList = ({messages, isLoading}: Props) => {
+    if (isLoading) {
+        return (
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 "></div>
+        )
+    }
   if (!messages) return <></>
   return (
     <div className="flex flex-col gap-2 px-4">

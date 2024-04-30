@@ -1,6 +1,10 @@
 Project tasks:
 
-FIX USECHAT() ISSUES IN CHATCOMPLETION
+Amend the process of adding pdf to the database
+Current issue: There is an issue with uploading the pdf to S3. check the pdfUpload.ts file. 
+
+Objective: 
+Get to a point where the PDF is showing in the PDF viewer and the chat funciton is working AND it takes it's context from the transcribed text. 
 
 
 Fix Content Viewer:

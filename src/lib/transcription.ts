@@ -4,7 +4,11 @@ const OpenAI = require('openai');
 const FormData = require('form-data');
 import fetch from 'node-fetch';
 const ffmpeg = require('fluent-ffmpeg');
-import { saveTranscriptionAsPDF } from './utils';
+import { getS3Url } from './s3';
+import { editPDF } from './PDFEdit'; // Import the editPDF function
+import { UploadToS3, UploadPDFToS3 } from './s3'; // Import the UploadToS3 function
+import { createAndUploadPDF } from './pdfUpload';
+
 
 const openai = new OpenAI({
     apiKey: process.env['OPENAI_API_KEY'],
@@ -50,7 +54,7 @@ async function transcribeChunk(filePath: string, start: number, end: number, ret
                 body: formData
             });
 
-            const result = await response.json();
+            const result = await response.json() as any;
 
             if (result.error) {
                 console.error(`Error in transcription attempt ${attempts + 1}:`, result.error.message);
@@ -102,18 +106,35 @@ export async function transcribeAndExtract(audioFile: string): Promise<Transcrip
     }
 
     if (fullTranscript) {
-        // Save transcript as a .txt file instead of a PDF
-        const txtFilePath = `/tmp/full_transcript-${Date.now()}.txt`;
-        fs.writeFileSync(txtFilePath, fullTranscript, 'utf-8');
-        console.log(`Transcript saved as text file at: ${txtFilePath}`);
+        try {
+            console.log('Transcript obtained:', fullTranscript);
+    
+            // Format the transcript as a PDF
+            console.log('Formatting transcript as PDF...');
+            const formattedPdfBytes = await editPDF(fullTranscript, 'Helvetica', 12, [0, 0, 0], [1, 1, 1]);
+    
+            // Create a Blob from the formatted PDF bytes
+            console.log('Formatting blob thingy...');
+            const blob = new Blob([formattedPdfBytes], { type: 'application/pdf' });
+            
+            // Create a File from the Blob
+            console.log('Creating file from blob...');
+            const file = new File([blob], 'formatted.pdf', { type: 'application/pdf' });
+    
+            // Upload the formatted PDF to S3
+            console.log('Uploading PDF to S3...');
+            const { file_key } = await UploadPDFToS3(file);
+    
+            // Store the S3 URL in your database
+            const pdfFilePath = await createAndUploadPDF(fullTranscript, file_key);
+            console.log('PDF uploaded to S3:', pdfFilePath);
 
-        const pdfFilePath = await saveTranscriptionAsPDF(fullTranscript, txtFilePath);
-        if (!pdfFilePath) {
-        console.error('Failed to save transcription as PDF.');
-        return undefined;
+            return { transcript: fullTranscript, txtFilePath: '', pdfFilePath: pdfFilePath };
+
+        } catch (error) {
+            console.error('Error formatting or uploading PDF:', error);
+            return undefined;
         }
-
-        return { transcript: fullTranscript, txtFilePath: txtFilePath, pdfFilePath: pdfFilePath };
     }
 
     return undefined;

@@ -1,13 +1,11 @@
 import { Pinecone} from '@pinecone-database/pinecone';
-import fs from 'fs';
 import { downloadFromS3 } from './s3-server';
 import { transcribeAndExtract, TranscriptionResult } from './transcription';
 import { getEmbeddings } from './embeddings';
 import dotenv from 'dotenv'; 
 import md5 from 'md5';
-import {PDFLoader} from 'langchain/document_loaders/fs/pdf';
 import { Document, RecursiveCharacterTextSplitter } from '@pinecone-database/doc-splitter';
-import { convertToAscii } from './utils';
+
 
 // Load environment variables from .env file
 dotenv.config();

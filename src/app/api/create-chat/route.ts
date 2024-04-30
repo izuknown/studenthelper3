@@ -24,6 +24,7 @@ export async function POST(req: Request, res: Response) {
                 fileKey: file_key,
                 contentName: file_name,
                 contentURL: getS3Url(file_key),
+                transcriptionurl: pdfFilePath, // Use pdfFilePath here
                 userId,
             })
             .returning({
