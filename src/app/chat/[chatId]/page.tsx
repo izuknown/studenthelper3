@@ -51,8 +51,8 @@ const ChatPage  = async ({ params: {chatId} }: Props) => {
                 <div className='flex-[1] max-w-xs'> <ChatSideBar chats={_chats} chatId={parseInt(chatId)}/>  </div>
 
                 {/* Lesson Content */}
-                <div className='max-h-screen p-4 overflow-scroll flex-[5]'>  
-                    <LessonContent contentURL={currentchat?.contentURL || ''} />
+                <div className="max-h-screen p-4 overflow-scroll flex-[5]">  
+                    <LessonContent transcriptionurl={currentchat?.transcriptionurl || ''} />
                 </div>
 
                 {/* Chat Component */}

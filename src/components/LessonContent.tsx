@@ -1,10 +1,13 @@
-import React from 'react'
+import React from 'react';
 
-type Props = {contentURL: string}
+type Props = {transcriptionurl: string};
 
-const LessonContent = ({contentURL}: Props) => {
+const LessonContent = ({transcriptionurl}: Props) => {
   return (
-    <iframe src={`https://docs.google.com/gview?url=${contentURL}&embedded=true`} className="w-full h-full"></iframe>      
+    <iframe 
+      src={`https://docs.google.com/gview?url=${transcriptionurl}&embedded=true`}
+      className="w-full h-full"
+    ></iframe>      
   );
 };
 
