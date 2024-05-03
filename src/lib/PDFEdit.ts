@@ -1,4 +1,25 @@
-import { PDFDocument, rgb } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+
+function wordWrap(text: string, maxWidth: number, font: any, fontSize: number): string {
+    let result = '';
+    let line = '';
+    const words = text.split(' ');
+
+    for (let i = 0; i < words.length; i++) {
+        const word = words[i];
+        const width = font.widthOfTextAtSize(word, fontSize);
+
+        if (line.length + width < maxWidth) {
+            line += (line ? ' ' : '') + word;
+        } else {
+            result += (result ? '\n' : '') + line;
+            line = word;
+        }
+    }
+
+    result += (result ? '\n' : '') + line;
+    return result;
+}
 
 export async function editPDF(
     transcript: string,
@@ -9,22 +30,18 @@ export async function editPDF(
 ): Promise<Uint8Array> {
     try {
         // Create a new PDF document
-        console.log('creating new pdf')
         const pdfDoc = await PDFDocument.create();
 
         // Add a new page to the document
-        console.log('adding adding new page')
-        const page = pdfDoc.addPage();
+        let page = pdfDoc.addPage();
 
         // Set font, font size, and font color
-        console.log('font setting')
         const font = await pdfDoc.embedFont(fontName);
         page.setFont(font);
         page.setFontSize(fontSize);
         page.setFontColor(rgb(fontColor[0], fontColor[1], fontColor[2]));
 
         // Set background color
-        console.log('setting background colour')
         page.drawRectangle({
             x: 0,
             y: 0,
@@ -33,15 +50,68 @@ export async function editPDF(
             color: rgb(backgroundColor[0], backgroundColor[1], backgroundColor[2]),
         });
 
-        // Add transcript as text content
-        console.log('adding transcript')
-        page.drawText(transcript, {
-            x: 50, // Adjust x-coordinate as needed
-            y: page.getHeight() - 50, // Adjust y-coordinate as needed
-        });
+        // Calculate available space on the first page
+        const margin = 50;
+        const textWidth = page.getWidth() - 2 * margin;
+        let y = page.getHeight() - margin; // Track current y-coordinate
+
+        // Embed standard font to calculate text metrics
+        const standardFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+        const fontHeight = fontSize * font.heightAtSize(fontSize);
+        const lineHeight = fontHeight * 1.2; // Adjust line spacing as needed
+
+        // Wrap the transcript text
+        const wrappedText = wordWrap(transcript, textWidth, font, fontSize);
+
+        // Split wrapped text into lines
+        const lines = wrappedText.split('\n');
+
+        // Iterate over lines and draw them on pages
+        let remainingText = '';
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+
+            if (y < margin + lineHeight) {
+                // If the current page is filled, add a new page
+                page = pdfDoc.addPage();
+                page.setFont(font);
+                page.setFontSize(fontSize);
+                page.setFontColor(rgb(fontColor[0], fontColor[1], fontColor[2]));
+
+                // Set background color
+                page.drawRectangle({
+                    x: 0,
+                    y: 0,
+                    width: page.getWidth(),
+                    height: page.getHeight(),
+                    color: rgb(backgroundColor[0], backgroundColor[1], backgroundColor[2]),
+                });
+
+                // Reset y-coordinate and draw remaining text
+                y = page.getHeight() - margin;
+                if (remainingText) {
+                    page.drawText(remainingText, {
+                        x: margin,
+                        y,
+                        maxWidth: textWidth,
+                    });
+                    y -= fontHeight * remainingText.split('\n').length;
+                    remainingText = '';
+                }
+            }
+
+            // Draw line on the current page
+            page.drawText(line, {
+                x: margin,
+                y,
+                maxWidth: textWidth,
+            });
+
+            // Update y-coordinate for the next line
+            y -= lineHeight;
+        }
 
         // Save the new PDF document as a Uint8Array
-        console.log('saving PDF')
         const modifiedPdfBytes = await pdfDoc.save();
         return modifiedPdfBytes;
     } catch (error) {
