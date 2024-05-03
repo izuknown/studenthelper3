@@ -1,14 +1,20 @@
 Project tasks:
 
-Amend the process of adding pdf to the database
-Current issue: PDF is now being uploaded to S3 however there is an issue with adding PDF URL to database and displaying. 
+Current issue: PDF is not being displayed and there is an issue with the chat feature:
+[cause]: Error: Response error: {
+    "error": {
+      "message": "Additional properties are not allowed ('system' was unexpected) - 'messages.0'",
+      "type": "invalid_request_error",
+      "param": null,
+      "code": null
+    }
+  }
+
+It appears that there are additional properties which is causing the chat feature to break. Namely that 'system' was unexected - messages.0. Find out what is causing this trip up. 
 
 Next task:
-1. Verify PDF creation 
-2. Verify upload
-3. Fix issues regarding database
-4. Fix visualisation issues
-5. fix chat function. 
+1. Fix visualisation issues
+2. fix chat function. 
 
 Objective: 
 Get to a point where the PDF is showing in the PDF viewer and the chat funciton is working AND it takes it's context from the transcribed text. 
