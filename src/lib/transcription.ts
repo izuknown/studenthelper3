@@ -107,25 +107,26 @@ export async function transcribeAndExtract(audioFile: string): Promise<Transcrip
 
     if (fullTranscript) {
         try {
-            console.log('Transcript obtained:', fullTranscript);
+            console.log('Transcript obtained, transcription.ts');
     
             // Format the transcript as a PDF
             console.log('Formatting transcript as PDF...');
             const formattedPdfBytes = await editPDF(fullTranscript, 'Helvetica', 12, [0, 0, 0], [1, 1, 1]);
     
             // Create a Blob from the formatted PDF bytes
-            console.log('Formatting blob thingy...');
+            console.log('Formatting blob thingy transcription.ts');
             const blob = new Blob([formattedPdfBytes], { type: 'application/pdf' });
             
             // Create a File from the Blob
-            console.log('Creating file from blob...');
+            console.log('Creating file from blob transcription.ts');
             const file = new File([blob], 'formatted.pdf', { type: 'application/pdf' });
     
             // Upload the formatted PDF to S3
-            console.log('Uploading PDF to S3...');
+            console.log('Uploading PDF to S3 transcription.ts');
             const { file_key } = await UploadPDFToS3(file);
     
             // Store the S3 URL in your database
+            console.log('storing pdf to s3 transcription.ts')
             const pdfFilePath = await createAndUploadPDF(fullTranscript, file_key);
             console.log('PDF uploaded to S3:', pdfFilePath);
 

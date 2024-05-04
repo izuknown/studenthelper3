@@ -27,6 +27,7 @@ export async function downloadFromS3(file_key: string) {
         const fileName = path.join(tmpDir, `${Date.now()}${fileExtension}`);
 
         // Save the file
+        console.log('Saving file s3-server')
         if (!fs.existsSync(tmpDir)) {
             fs.mkdirSync(tmpDir);
         }
@@ -44,7 +45,7 @@ export async function downloadFromS3(file_key: string) {
             console.error('Received data is not a buffer or a readable stream');
             return null;
         }
-
+        console.log('File saved, s3-server')
         return fileName;
 
     } catch (error) {

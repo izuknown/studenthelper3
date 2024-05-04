@@ -6,6 +6,7 @@ import { chats, messages as _messages } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { Message } from "ai";
+import { Content } from "next/font/google";
 
 export const runtime = "edge";
 
@@ -27,7 +28,7 @@ export async function POST(req: Request) {
 
     const prompt = {
         role: "system",
-        system: `AI assistant is brand new powerful human-like artificial intelligence.
+        content: `AI assistant is brand new powerful human-like artificial intelligence.
         The traits of AI include expert knowledge, helpfulness, articulateness, and mentoring.
         AI is always well-behaved, well-mannered, and well-meaning.
         AI is always kind and friendly and utilizes the Socratic method to help guide the learning and understanding of others.
@@ -49,24 +50,32 @@ export async function POST(req: Request) {
       ],
       stream: true,
     });
+    console.log('Generating AI response using OpenAIs createChatCompletion method, chat/route.ts')
+
+
     const stream = OpenAIStream(response, {
         onStart: async () => {
-          // save user message into db 
+          console.log('save user message to database, chat/rout.ts') 
           await db.insert(_messages).values({
             chatId,
             messageContent: lastMessage.content,
             role: 'user'
           });
+          console.log('inserting user message to database, chat/rout.ts')
         },
         onCompletion: async (completion) => {
-          //save ai message to db
+          console.log('save ai message to database, chat/rout.ts')
           await db.insert(_messages).values({
             chatId,
             messageContent: completion,
             role: 'system'
           });
+          console.log('inserting ai message to database, chat/rout.ts')
         }
       });
+    console.log('Returning a StreamingTextResponse with the generated response stream')
     return new StreamingTextResponse(stream);
-  } catch (error){}
+  } catch (error){
+    console.log('error in chat process', error)
+  }
 }

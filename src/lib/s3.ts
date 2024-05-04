@@ -55,7 +55,7 @@ export async function UploadPDFToS3(file: File) {
         };
 
         await s3.putObject(params);
-        console.log('Successfully uploaded to S3!', file_key);
+        console.log('Successfully uploaded to S3! s3.ts', file_key);
 
         return {
             file_key,
@@ -63,7 +63,7 @@ export async function UploadPDFToS3(file: File) {
         };
 
     } catch (error) {
-        console.error('Error uploading to S3:', error);
+        console.error('Error uploading to S3: s3.ts', error);
         throw error;
     }
 }

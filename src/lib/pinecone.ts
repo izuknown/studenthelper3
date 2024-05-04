@@ -26,16 +26,18 @@ export async function loadS3IntoPinecone(fileKey: string) {
         console.log('File downloaded from S3:', filePath);
 
         // Transcribe the downloaded media file
+        console.log('transcribing file...')
         const transcriptionResult: TranscriptionResult | undefined = await transcribeAndExtract(filePath);
         if (!transcriptionResult) {
             throw new Error("Could not transcribe the file");
         }
 
         if (transcriptionResult) {
-            console.log('Here is the transcription result:........', transcriptionResult)
+            console.log('File sucsesfully transcribed')
         }
 
         //split and segment full transcription
+        console.log('splitting and segmenting trancription')
         const transcribedtext = await Promise.all(
             Array.isArray(transcriptionResult.transcript)
                 ? transcriptionResult.transcript.map(prepareText)
@@ -43,6 +45,7 @@ export async function loadS3IntoPinecone(fileKey: string) {
         );
 
         // vectorise and embed the full transcript
+        console.log('vectorising and embeding segmented transcript')
         const vectors = await Promise.all(transcribedtext.flat().map(embedDocuments))
 
         // upload to pinecone
