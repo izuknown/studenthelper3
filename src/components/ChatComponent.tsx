@@ -28,7 +28,7 @@ const ChatComponent = ({ chatId }: Props) => {
         initialMessages: data || [],
     });
 
-    useEffect(() => {
+    React.useEffect(() => {
         const messageContainer = document.getElementById('message-container');
         if (messageContainer) {
             messageContainer.scrollTo({
@@ -37,6 +37,7 @@ const ChatComponent = ({ chatId }: Props) => {
             });
         }
     }, [messages]);
+
 
     return (
         <div className="relative max-h-screen overflow-scroll" id="message-container">
