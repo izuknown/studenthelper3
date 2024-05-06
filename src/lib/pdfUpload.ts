@@ -1,8 +1,6 @@
 import { editPDF } from './PDFEdit';
 import { UploadPDFToS3, getS3Url } from './s3';
-import { eq } from 'drizzle-orm';
-import { db } from '@/lib/db';
-import { chats } from '@/lib/db/schema';
+
 
 export async function createAndUploadPDF(transcript: string, fileKey: string) {
   try {

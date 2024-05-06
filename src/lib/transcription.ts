@@ -6,7 +6,7 @@ import fetch from 'node-fetch';
 const ffmpeg = require('fluent-ffmpeg');
 import { getS3Url } from './s3';
 import { editPDF } from './PDFEdit'; // Import the editPDF function
-import { UploadToS3, UploadPDFToS3 } from './s3'; // Import the UploadToS3 function
+import { getFileKey, UploadPDFToS3 } from './s3'; // Import the UploadToS3 function
 import { createAndUploadPDF } from './pdfUpload';
 
 
@@ -123,7 +123,7 @@ export async function transcribeAndExtract(audioFile: string): Promise<Transcrip
     
             // Upload the formatted PDF to S3
             console.log('Uploading PDF to S3 transcription.ts');
-            const { file_key } = await UploadPDFToS3(file);
+            const { file_key } = await getFileKey(file);
     
             // Store the S3 URL in your database
             console.log('storing pdf to s3 transcription.ts')

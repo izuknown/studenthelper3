@@ -1,5 +1,14 @@
 import { S3, PutObjectCommandInput} from '@aws-sdk/client-s3';
 
+// Function to generate a file key based on the provided file
+export async function getFileKey(file: File): Promise<{ file_key: string }> {
+    const timestamp = Date.now().toString();
+    const fileName = file.name ?? '';
+    const sanitizedFileName = fileName.replace(' ', '-');
+    const file_key = `uploads/${timestamp}${sanitizedFileName}`;
+    return { file_key };
+}
+
 export async function UploadToS3(file: File) {
     try {
         const s3 = new S3({
@@ -69,6 +78,6 @@ export async function UploadPDFToS3(file: File) {
 }
 
 export function getS3Url(file_key: string) {
-    const url = `https://${process.env.NEXT_PUBLIC_S3_BUCKET_NAME}.s3.eu-west-1.amazonaws.com/${file_key}`;
+    const url = `https://${process.env.NEXT_PUBLIC_S3_BUCKET_NAME}.s3.eu-west-2.amazonaws.com/${file_key}`;
     return url;
 }
