@@ -1,13 +1,15 @@
 import React from 'react';
 
-type Props = {transcriptionurl: string};
+type Props = {pdfFilePath: string};
 
-const LessonContent = ({transcriptionurl}: Props) => {
+const LessonContent = ({pdfFilePath}: Props) => {
+  console.log('pdfFilePath: lesson content', pdfFilePath)
   return (
     <iframe 
-      src={`https://docs.google.com/gview?url=${transcriptionurl}&embedded=true`}
-      className="w-full h-full"
-    ></iframe>      
+    src={`https://docs.google.com/gview?url=${pdfFilePath}&embedded=true`}
+    className="w-full h-full"
+  ></iframe>
+     
   );
 };
 

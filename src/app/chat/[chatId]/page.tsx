@@ -52,7 +52,8 @@ const ChatPage  = async ({ params: {chatId} }: Props) => {
 
                 {/* Lesson Content */}
                 <div className="max-h-screen p-4 overflow-scroll flex-[5]">  
-                    <LessonContent transcriptionurl={currentchat?.transcriptionurl || ''} />
+                    
+                    <LessonContent pdfFilePath={currentchat?.transcriptionurl || ''} />
                 </div>
 
                 {/* Chat Component */}

@@ -22,7 +22,7 @@ export async function createAndUploadPDF(transcript: string, fileKey: string) {
 
     // Store the S3 URL in your database
     const pdfFilePath = getS3Url(file_key);
-    console.log('PDF uploaded to S3:', pdfFilePath);
+    console.log('PDF uploaded to S3: pdfUpload', pdfFilePath);
 
     return pdfFilePath; // Return the pdfFilePath
     

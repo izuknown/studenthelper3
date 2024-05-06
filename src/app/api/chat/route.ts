@@ -19,11 +19,12 @@ export async function POST(req: Request) {
   try {
     const { messages, chatId } = await req.json();
     const _chats = await db.select().from(chats).where(eq(chats.id, chatId));
-    if (_chats.length != 1 ) {
-        return NextResponse.json({"error": "chat not found"}, {status:404}) 
+    if (_chats.length != 1) {
+      return NextResponse.json({ error: "chat not found" }, { status: 404 });
     }
     const fileKey = _chats[0].fileKey;
-    const lastMessage = messages[messages.length -1];
+    const lastMessage = messages[messages.length - 1];
+
     const context = await getContext(lastMessage.content, fileKey);
 
     const prompt = {
