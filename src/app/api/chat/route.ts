@@ -6,7 +6,6 @@ import { chats, messages as _messages } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { Message } from "ai";
-import { Content } from "next/font/google";
 
 export const runtime = "edge";
 
@@ -26,7 +25,7 @@ export async function POST(req: Request) {
     const lastMessage = messages[messages.length - 1];
 
     const context = await getContext(lastMessage.content, fileKey);
-
+    console.log('Context:', context);
     const prompt = {
         role: "system",
         content: `AI assistant is brand new powerful human-like artificial intelligence.
@@ -51,7 +50,10 @@ export async function POST(req: Request) {
       ],
       stream: true,
     });
-    console.log('Generating AI response using OpenAIs createChatCompletion method, chat/route.ts')
+    console.log('context is', context)
+    console.log('prompt is', prompt)
+    console.log('Message is', messages)
+    console.log('Generating AI response using OpenAIs createChatCompletion method, chat/route.ts.')
 
 
     const stream = OpenAIStream(response, {

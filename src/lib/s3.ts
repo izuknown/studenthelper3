@@ -29,7 +29,7 @@ export async function UploadToS3(file: File) {
         };
 
         await s3.putObject(params);
-        console.log('Successfully uploaded to S3!', file_key);
+        console.log('Successfully uploaded MEDIA FILE to S3!', file_key);
 
         return {
             file_key,
@@ -64,7 +64,7 @@ export async function UploadPDFToS3(file: File) {
         };
 
         await s3.putObject(params);
-        console.log('Successfully uploaded to S3! s3.ts', file_key);
+        console.log('Successfully uploaded PDF to S3! s3.ts', file_key);
 
         return {
             file_key,

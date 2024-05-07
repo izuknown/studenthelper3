@@ -5,6 +5,7 @@ import { getS3Url } from "@/lib/s3";
 import { createAndUploadPDF } from "@/lib/pdfUpload"; // Import the function
 import { auth } from "@clerk/nextjs";
 import { NextResponse } from "next/server";
+import { returnPDFFilePath, getStoredPDFFilePath } from "@/lib/pdfFilePath";
 
 // /api/create-chat
 export async function POST(req: Request, res: Response) {
@@ -18,8 +19,8 @@ export async function POST(req: Request, res: Response) {
         const { file_key, file_name } = body;
         await loadS3IntoPinecone(file_key); // Load S3 file into Pinecone
 
-        // Create and upload PDF, and get the file path
-        const pdfFilePath = await createAndUploadPDF(file_name, file_key);
+        // Get pdfFilePath from pdfUpload.ts
+        const pdfFilePath = getStoredPDFFilePath();
 
         // Insert chat data into the database
         const chat_id = await db

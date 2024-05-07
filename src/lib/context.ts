@@ -11,8 +11,9 @@ export async function getMatchesFromEmbeddings(embeddings: number[], fileKey: st
 
     // Get or create an index in the Pinecone database
     const index = await pineconeClient.index('studenthelper3');
-
+    
     try {
+
         // Create or access a namespace within the index based on the ASCII representation of the fileKey
         console.log('access a namespace within the index base on the ASCII representation fo the fileKey context.ts')
         const namespace = index.namespace(convertToAscii(fileKey));
@@ -23,14 +24,11 @@ export async function getMatchesFromEmbeddings(embeddings: number[], fileKey: st
             topK: 5,
             vector: embeddings,
             includeMetadata: true, // Assign the namespace to the namespace property
-          });
-        
-        console.log('returning matches found the query')
-        console.log('Querying the index for matches based on provided embeddings, context.ts');
-        return queryResult.matches || [];
+        });     
 
         console.log('returning matches found the query');
-    return queryResult.matches || []; // Return the matches found in the query result
+        return queryResult.matches || []; // Return the matches found in the query result
+
     } catch (error) {
         // Handle errors that occur during the query process
         console.log("Error querying embeddings from Pinecone. See src/lib/context.ts line 11", error);
@@ -40,6 +38,7 @@ export async function getMatchesFromEmbeddings(embeddings: number[], fileKey: st
 
 // Function to get context based on a query string and fileKey
 export async function getContext(query: string, fileKey: string) {
+    
     // Get embeddings for the query text
     console.log('Get embeddings for the query text context.ts')
     const queryEmbeddings = await getEmbeddings(query);

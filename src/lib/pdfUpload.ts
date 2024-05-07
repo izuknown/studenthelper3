@@ -1,6 +1,6 @@
 import { editPDF } from './PDFEdit';
 import { UploadPDFToS3, getS3Url } from './s3';
-
+import { returnPDFFilePath } from './pdfFilePath';
 
 export async function createAndUploadPDF(transcript: string, fileKey: string) {
   try {
@@ -20,8 +20,9 @@ export async function createAndUploadPDF(transcript: string, fileKey: string) {
 
     // Store the S3 URL in your database
     const pdfFilePath = getS3Url(file_key);
-    console.log('PDF uploaded to S3: pdfUpload', pdfFilePath);
-
+    console.log('PDF uploaded to S3: pdfUpload.ts', pdfFilePath);
+    
+    returnPDFFilePath(pdfFilePath);
     return pdfFilePath; // Return the pdfFilePath
     
   } catch (error) {

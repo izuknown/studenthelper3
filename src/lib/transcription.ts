@@ -124,11 +124,13 @@ export async function transcribeAndExtract(audioFile: string): Promise<Transcrip
             // Upload the formatted PDF to S3
             console.log('Uploading PDF to S3 transcription.ts');
             const { file_key } = await getFileKey(file);
+            console.log("File Key transcriptio.ts l-127:", file_key)
     
             // Store the S3 URL in your database
             console.log('storing pdf to s3 transcription.ts')
             const pdfFilePath = await createAndUploadPDF(fullTranscript, file_key);
-            console.log('PDF uploaded to S3:', pdfFilePath);
+            console.log('PDF uploaded to S3 transcription.ts transcrition.ts l-133:', pdfFilePath);
+
 
             return { transcript: fullTranscript, txtFilePath: '', pdfFilePath: pdfFilePath };
 
